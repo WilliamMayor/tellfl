@@ -1,0 +1,11 @@
+Date, Start Time, End Time, Journey/Action, Charge, Credit, Balance, Note
+08-Oct-2013, 19:29, , "Bus journey, route U1", 0.00, , 19.45, "The fare for this journey was capped as you reached the daily charging limit for the zones used"
+08-Oct-2013, 17:56, 19:18, "Baker Street to Ruislip", 3.40, , 19.45, "The fare for this journey was capped as you reached the daily charging limit for the zones used"
+08-Oct-2013, 17:20, 17:32, "Entered and exited Euston Square", 2.10, , 22.85, ""
+08-Oct-2013, 10:33, 11:27, "Uxbridge to Euston Square", 3.00, , 24.95, ""
+08-Oct-2013, 10:33, , "Auto top-up, Uxbridge", , 20.00, 27.95, ""
+07-Oct-2013, 19:26, 20:11, "Euston Square to Ruislip", 3.00, , 7.95, ""
+07-Oct-2013, 12:38, 13:19, "Ruislip to Euston Square", 3.00, , 10.95, ""
+04-Oct-2013, 17:04, 17:43, "Euston Square to Ruislip", 5.00, , 13.95, ""
+04-Oct-2013, 12:23, 13:16, "Ruislip to Euston Square", 3.00, , 18.95, ""
+03-Oct-2013, 18:59, 19:55, "Victoria [London Underground] to Ruislip", 3.00, , 21.95, ""
