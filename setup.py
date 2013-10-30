@@ -14,5 +14,8 @@ setup(
     url='www.tellfl.co.uk',
     packages=['tellfl'],
     scripts=['scripts/tellfl'],
-    data_files=[('tellfl', ['assets/schema.sql'])]
+    package_data={
+        'tellfl': ['assets/schema.sql']
+    },
+    install_requires=['docopts']
 )

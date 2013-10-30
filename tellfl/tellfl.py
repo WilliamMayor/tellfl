@@ -4,6 +4,8 @@ import datetime
 import sqlite3
 import os
 
+from pkg_resources import resource_string
+
 MINUTE = 60
 HOUR = MINUTE * 60
 DAY = HOUR * 24
@@ -140,11 +142,13 @@ def run(username, csv_path, location):
 
 
 def install(location):
+    try:
+        os.makedirs(location)
+    except:
+        pass
     conn = sqlite3.connect(os.path.join(location, DB_NAME))
     c = conn.cursor()
-    path = 'schema.sql'
-    with open(path, 'r') as fd:
-        sql = fd.read()
-        c.executescript(sql)
+    sql = resource_string(__name__, 'assets/schema.sql')
+    c.executescript(sql)
     conn.commit()
     conn.close()

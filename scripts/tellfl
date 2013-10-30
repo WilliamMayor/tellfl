@@ -21,6 +21,6 @@ from tellfl import tellfl
 
 arguments = docopt(__doc__, version='tellfl 0.1')
 if arguments['install']:
-    tellfl.install(arguments['location'])
+    tellfl.install(arguments['--location'])
 else:
-    tellfl.run(arguments['USER'], arguments['CSV'], arguments['location'])
+    tellfl.run(arguments['USER'], arguments['CSV'], arguments['--location'])
