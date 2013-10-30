@@ -38,7 +38,7 @@ def add_user(email):
 def add_journey(user, station_from, station_to, time_in, time_out, cost):
     c = conn.cursor()
     c.execute(('INSERT INTO '
-               'history(user, station_from, station_to, '
+               'journeys(user, station_from, station_to, '
                'time_in, time_out, cost) '
                'VALUES(?, ?, ?, ?, ?, ?)'),
              (user, station_from, station_to, time_in, time_out, cost))
