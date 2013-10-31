@@ -17,5 +17,5 @@ setup(
     package_data={
         'tellfl': ['assets/schema.sql']
     },
-    install_requires=['docopts']
+    install_requires=['docopt']
 )

@@ -2,8 +2,8 @@
 '''tellfl.
 
 Usage:
-  tellfl CSV USER [--location LOCATION]
   tellfl install [--location LOCATION]
+  tellfl USER [CSV] [--location LOCATION] [--new --email EMAIL]
   tellfl --help
   tellfl --version
 
@@ -12,9 +12,11 @@ Arguments:
   USER  The unique username to assciate the history to
 
 Options:
-  --location=LOCATION  The location of the tellfl install [default: /usr/local/tellfl]. # NOQA
-  --help      Show this screen.
-  --version   Show version.
+  --location LOCATION  The location of the tellfl install [default: /usr/local/tellfl]. # NOQA
+  --email EMAIL        The email address of the new user
+  --new                Add this user to the database [default: False]
+  --help               Show this screen
+  --version            Show version
 '''
 from docopt import docopt
 from tellfl import tellfl
@@ -23,4 +25,13 @@ arguments = docopt(__doc__, version='tellfl 0.1')
 if arguments['install']:
     tellfl.install(arguments['--location'])
 else:
-    tellfl.run(arguments['USER'], arguments['CSV'], arguments['--location'])
+    try:
+        tellfl.run(
+            arguments['USER'],
+            arguments['CSV'],
+            arguments['--location'],
+            arguments['--new'],
+            arguments['--email']
+        )
+    except Exception as e:
+        print 'Something went wrong:', e
