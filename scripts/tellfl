@@ -3,18 +3,20 @@
 
 Usage:
   tellfl install [--location LOCATION]
-  tellfl USER [CSV] [--location LOCATION] [--new --email EMAIL]
+  tellfl register USER EMAIL [--location LOCATION]
+  tellfl add USER CSV [--location LOCATION]
+  tellfl report USER [--html] [--location LOCATION]
   tellfl --help
   tellfl --version
 
 Arguments:
   CSV   The path to a .csv Oyster journey history report from TfL
   USER  The unique username to assciate the history to
+  EMAIL THe Email address of the new user
 
 Options:
   --location LOCATION  The location of the tellfl install [default: /usr/local/tellfl]. # NOQA
-  --email EMAIL        The email address of the new user
-  --new                Add this user to the database [default: False]
+  --html               Output the report as HTML, instead of plain text
   --help               Show this screen
   --version            Show version
 '''
@@ -22,16 +24,26 @@ from docopt import docopt
 from tellfl import tellfl
 
 arguments = docopt(__doc__, version='tellfl 0.1')
-if arguments['install']:
-    tellfl.install(arguments['--location'])
-else:
-    try:
-        tellfl.run(
+try:
+    if arguments['install']:
+        tellfl.install(arguments['--location'])
+    elif arguments['register']:
+        tellfl.register(
+            arguments['USER'],
+            arguments['EMAIL'],
+            arguments['--location']
+        )
+    elif arguments['add']:
+        tellfl.add(
             arguments['USER'],
             arguments['CSV'],
-            arguments['--location'],
-            arguments['--new'],
-            arguments['--email']
+            arguments['--location']
         )
-    except Exception as e:
-        print 'Something went wrong:', e
+    elif arguments['report']:
+        tellfl.report(
+            arguments['USER'],
+            arguments['--location'],
+            arguments['--html']
+        )
+except Exception as e:
+    print 'Something went wrong:', e

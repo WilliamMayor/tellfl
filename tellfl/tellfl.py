@@ -44,13 +44,22 @@ def get_weekly_spends(cursor, user_id, start=None):
     return __get_spends(cursor, user_id, start, WEEK)
 
 
-def get_user(cursor, email):
-    q = 'SELECT id FROM users WHERE email = ?'
-    cursor.execute(q, (email, ))
-    row = cursor.fetchone()
-    if row is None:
-        return None
-    return row[0]
+def to_timestamp(date, _time):
+    d_fmt = '%d-%b-%Y %X'
+    tz = pytz.timezone('Europe/London')
+    dt = datetime.datetime.strptime(
+        '%s %s:00' % (date, _time),
+        d_fmt
+    )
+    dt = datetime.datetime(
+        dt.year,
+        dt.month,
+        dt.day,
+        dt.hour,
+        dt.minute,
+        tzinfo=tz
+    )
+    return int(dt.strftime('%s'))
 
 
 def parse_csv(path):
@@ -60,36 +69,10 @@ def parse_csv(path):
             try:
                 # date, start, end, action, charge, credit, balance, note
                 row = map(lambda x: x.strip(), row)
-                d_fmt = '%d-%b-%Y %X'
-                tz = pytz.timezone('Europe/London')
-                dt = datetime.datetime.strptime(
-                    '%s %s:00' % (row[0], row[1]),
-                    d_fmt
-                )
-                dt = datetime.datetime(
-                    dt.year,
-                    dt.month,
-                    dt.day,
-                    dt.hour,
-                    dt.minute,
-                    tzinfo=tz
-                )
-                time_start = int(dt.strftime('%s'))
+                time_start = to_timestamp(row[0], row[1])
                 time_end = None
                 if row[2] != '':
-                    dt = datetime.datetime.strptime(
-                        '%s %s:00' % (row[0], row[2]),
-                        d_fmt
-                    )
-                    dt = datetime.datetime(
-                        dt.year,
-                        dt.month,
-                        dt.day,
-                        dt.hour,
-                        dt.minute,
-                        tzinfo=tz
-                    )
-                    time_end = int(dt.strftime('%s'))
+                    time_end = to_timestamp(row[0], row[2])
                 action = row[3]
                 charge = None
                 if row[4] != '':
@@ -123,15 +106,6 @@ def find_user(cursor, username):
         raise Exception('No user with that username')
 
 
-def add_user(cursor, username, email):
-    try:
-        q = 'INSERT INTO users(username, email) VALUES(?, ?)'
-        cursor.execute(q, (username, email))
-        return cursor.lastrowid
-    except:
-        raise Exception('A user with that username already exists')
-
-
 def split_stations(action):
     return 'Ruislip', None
 
@@ -152,68 +126,95 @@ def add_to_db(cursor, uid, csv_path):
             )
 
 
-def report(cursor, uid, most_recent):
+def create_reports(cursor, uid):
     reports = []
     cursor.execute(PAYMENT_STATS, (uid, ))
     payment_stats = cursor.fetchone()
-    p_total = payment_stats[0]
-    p_mean = payment_stats[1]
+    p_total = payment_stats[0] or 0
+    p_mean = payment_stats[1] or 0
     cursor.execute(JOURNEY_STATS, (uid, ))
     journey_stats = cursor.fetchone()
-    j_min = journey_stats[0]
-    j_max = journey_stats[1]
-    j_count = journey_stats[2]
-    j_mean = journey_stats[3]
-    j_sum = journey_stats[4]
+    j_min = journey_stats[0] or 0
+    j_max = journey_stats[1] or 1
+    j_count = journey_stats[2] or 1
+    j_mean = journey_stats[3] or 0
+    j_sum = journey_stats[4] or 1
     j_total = j_max - j_min
-    if payment_stats[0] is not None:
-        reports.append(('total spend', '£%.2f' % (p_total / 100.00, )))
-        reports.append(('mean spend', '£%.2f' % (p_mean / 100.00, )))
-    if journey_stats[0] is not None:
-        reports.append(('# weeks', '%.2f' % (j_total / WEEK, )))
-        reports.append(('mean weekly spend',
-                        '£%.2f' % (p_total / (j_total / WEEK) / 100.00, )))
-        reports.append(('# months', '%.2f' % (j_total / MONTH), ))
-        reports.append(('mean monthly spend',
-                        '£%.2f' % (p_total / (j_total / MONTH) / 100.00, )))
-        reports.append(('# years', '%.2f' % (j_total / YEAR), ))
-        reports.append(('mean annual spend',
-                        '£%.2f' % (p_total / (j_total / YEAR) / 100.00, )))
-        reports.append(('# journeys', '%d' % (j_count, )))
-        reports.append(('mean journey cost',
-                        '£%.2f' % (p_total / (j_count * 100.00), )))
-        reports.append(('mean journey time',
-                        '%d minutes' % (j_mean / MINUTE, )))
-        reports.append(('cost per minute',
-                        '£%.2f' % (p_total / (j_sum / MINUTE * 100.00), )))
+    reports.append(('total spend', '£%.2f' % (p_total / 100.00, )))
+    reports.append(('mean spend', '£%.2f' % (p_mean / 100.00, )))
+    reports.append(('# days', '%.2f' % (j_total / DAY, )))
+    reports.append(('mean daily spend',
+                    '£%.2f' % (p_total / (j_total / DAY) / 100.00, )))
+    reports.append(('# weeks', '%.2f' % (j_total / WEEK, )))
+    reports.append(('mean weekly spend',
+                    '£%.2f' % (p_total / (j_total / WEEK) / 100.00, )))
+    reports.append(('# months', '%.2f' % (j_total / MONTH), ))
+    reports.append(('mean monthly spend',
+                    '£%.2f' % (p_total / (j_total / MONTH) / 100.00, )))
+    reports.append(('# years', '%.2f' % (j_total / YEAR), ))
+    reports.append(('mean annual spend',
+                    '£%.2f' % (p_total / (j_total / YEAR) / 100.00, )))
+    reports.append(('# journeys', '%d' % (j_count, )))
+    reports.append(('mean journey cost',
+                    '£%.2f' % (p_total / (j_count * 100.00), )))
+    reports.append(('mean journey time',
+                    '%d minutes' % (j_mean / MINUTE, )))
+    reports.append(('cost per minute',
+                    '£%.2f' % (p_total / (j_sum / MINUTE * 100.00), )))
 
     for r in reports:
         print '%s: %s' % (r[0], r[1])
 
 
-def run(username, csv_path, location, new_user, email):
-    conn = sqlite3.connect(os.path.join(location, DB_NAME))
-    cursor = conn.cursor()
-    if new_user:
-        uid = add_user(cursor, username, email)
-    else:
+class TellfLException(Exception):
+    pass
+
+
+class DB:
+
+    def __init__(self, location):
+        self.location = location
+
+    def __enter__(self):
+        self.conn = sqlite3.connect(os.path.join(self.location, DB_NAME))
+        return self.conn.cursor()
+
+    def __exit__(self, type, value, traceback):
+        if traceback is not None:
+            self.conn.commit()
+        self.conn.close()
+
+
+def report(username, location, as_html):
+    with DB(location) as cursor:
         uid = find_user(cursor, username)
-    most_recent = None
-    if csv_path is not None:
-        most_recent = add_to_db(cursor, uid, csv_path)
-    report(cursor, uid, most_recent)
-    conn.commit()
-    conn.close()
+        create_reports(cursor, uid)
+
+
+def add(username, csv_path, location):
+    with DB(location) as cursor:
+        uid = find_user(cursor, username)
+        add_to_db(cursor, uid, csv_path)
+
+
+def register(username, email, location):
+    with DB(location) as cursor:
+        try:
+            q = 'INSERT INTO users(username, email) VALUES(?, ?)'
+            cursor.execute(q, (username, email))
+        except:
+            raise TellfLException('A user with that username already exists')
 
 
 def install(location):
     try:
         os.makedirs(location)
-    except:
+    except OSError:
         pass
-    conn = sqlite3.connect(os.path.join(location, DB_NAME))
-    c = conn.cursor()
-    sql = resource_string(__name__, 'assets/schema.sql')
-    c.executescript(sql)
-    conn.commit()
-    conn.close()
+    except Exception:
+        raise TellfLException(
+            'Cannot install to this location: ' % (location, )
+        )
+    with DB(location) as cursor:
+        sql = resource_string(__name__, 'assets/schema.sql')
+        cursor.executescript(sql)
