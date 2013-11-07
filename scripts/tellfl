@@ -3,7 +3,7 @@
 
 Usage:
   tellfl install [--location LOCATION]
-  tellfl register USER EMAIL [--location LOCATION]
+  tellfl register USER [--location LOCATION]
   tellfl add USER CSV [--location LOCATION]
   tellfl report USER [--html] [--location LOCATION]
   tellfl --help
@@ -12,7 +12,6 @@ Usage:
 Arguments:
   CSV   The path to a .csv Oyster journey history report from TfL
   USER  The unique username to assciate the history to
-  EMAIL THe Email address of the new user
 
 Options:
   --location LOCATION  The location of the tellfl install [default: /usr/local/tellfl]. # NOQA
@@ -30,7 +29,6 @@ try:
     elif arguments['register']:
         tellfl.register(
             arguments['USER'],
-            arguments['EMAIL'],
             arguments['--location']
         )
     elif arguments['add']:
@@ -47,3 +45,5 @@ try:
         )
 except Exception as e:
     print 'Something went wrong:', e
+    import sys
+    print sys.exc_info()[0]

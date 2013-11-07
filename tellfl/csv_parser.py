@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 import datetime
 import string
@@ -40,8 +41,8 @@ def parse_values(row):
     if row[7] != '':
         note = row[7]
     return {
-        'time_start': time_start,
-        'time_end': time_end,
+        'time_in': time_start,
+        'time_out': time_end,
         'action': action,
         'charge': charge,
         'credit': credit,
@@ -67,7 +68,7 @@ def parse_row(row):
         return {
             'type': 'payment',
             'amount': row['credit'],
-            'time': row['time_start']
+            'time': row['time_in']
         }
     station_from, station_to = parse_action(row['action'])
     return {
@@ -76,7 +77,7 @@ def parse_row(row):
         'station_to': station_to,
         'time_in': row['time_in'],
         'time_out': row['time_out'],
-        'cost': row['cost']
+        'cost': row['charge']
     }
 
 

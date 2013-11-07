@@ -4,7 +4,6 @@ DROP TABLE IF EXISTS payments;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY,
     username TEXT,
-    email TEXT,
     UNIQUE(username) ON CONFLICT FAIL
 );
 CREATE TABLE journeys (
