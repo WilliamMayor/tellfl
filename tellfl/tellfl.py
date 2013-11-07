@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import time
-import csv
-import datetime
 import sqlite3
 import os
-import pytz
 
 from pkg_resources import resource_string
+
+from tellfl.csv_parser import parse_csv
 
 MINUTE = 60.0
 HOUR = MINUTE * 60.0
@@ -44,59 +43,6 @@ def get_weekly_spends(cursor, user_id, start=None):
     return __get_spends(cursor, user_id, start, WEEK)
 
 
-def to_timestamp(date, _time):
-    d_fmt = '%d-%b-%Y %X'
-    tz = pytz.timezone('Europe/London')
-    dt = datetime.datetime.strptime(
-        '%s %s:00' % (date, _time),
-        d_fmt
-    )
-    dt = datetime.datetime(
-        dt.year,
-        dt.month,
-        dt.day,
-        dt.hour,
-        dt.minute,
-        tzinfo=tz
-    )
-    return int(dt.strftime('%s'))
-
-
-def parse_csv(path):
-    with open(path, 'rb') as fd:
-        r = csv.reader(fd, skipinitialspace=True)
-        for row in r:
-            try:
-                # date, start, end, action, charge, credit, balance, note
-                row = map(lambda x: x.strip(), row)
-                time_start = to_timestamp(row[0], row[1])
-                time_end = None
-                if row[2] != '':
-                    time_end = to_timestamp(row[0], row[2])
-                action = row[3]
-                charge = None
-                if row[4] != '':
-                    charge = int(row[4].replace('.', ''))
-                credit = None
-                if row[5] != '':
-                    credit = int(row[5].replace('.', ''))
-                balance = int(row[6].replace('.', ''))
-                note = None
-                if row[7] != '':
-                    note = row[7]
-                yield {
-                    'time_start': time_start,
-                    'time_end': time_end,
-                    'action': action,
-                    'charge': charge,
-                    'credit': credit,
-                    'balance': balance,
-                    'note': note
-                }
-            except:
-                pass
-
-
 def find_user(cursor, username):
     q = 'SELECT id FROM users WHERE username=?'
     cursor.execute(q, (username, ))
@@ -106,22 +52,17 @@ def find_user(cursor, username):
         raise Exception('No user with that username')
 
 
-def split_stations(action):
-    return 'Ruislip', None
-
-
 def add_to_db(cursor, uid, csv_path):
     for record in parse_csv(csv_path):
-        if record['credit'] is not None:
+        if record['type'] == 'payment':
             cursor.execute(
                 INSERT_PAYMENT,
-                (uid, record['credit'], record['time_start'])
+                (uid, record['amount'], record['time'])
             )
-        else:
-            s_from, s_to = split_stations(record['action'])
+        elif record['type'] == 'journey':
             cursor.execute(
                 INSERT_JOURNEY,
-                (uid, s_from, s_to,
+                (uid, record['station_from'], record['station_to'],
                  record['time_start'], record['time_end'], record['charge'])
             )
 
