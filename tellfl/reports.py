@@ -76,7 +76,12 @@ def create_daily(cursor, uid, reports):
 
 
 def create_weekly(cursor, uid, reports):
-    return dict()
+    t_in = reports['min_time'].date()
+    t_out = reports['max_time'].date() + datetime.timedelta(days=1)
+    delta = t_out - t_in
+    return dict(
+        weeks_count=int(delta.days / 7.0 + 0.5)
+    )
 
 
 def create(cursor, uid):
