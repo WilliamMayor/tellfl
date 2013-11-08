@@ -6,6 +6,7 @@ branches:
   - master
 install: bash .travis/install.sh
 script: bash .travis/script.sh
+after_script: bash .travis/after_script.sh
 env:
   global:
   - secure: dDDjukyQ2oQxTbW1rCQsdMcM6Lmw4InGmJTkvVgWIZ4h/go4ci88FYTclh0jv3ECJ8PhJHUvRdzQuEwxil3tUeTtwEoedJrsdP77gVfMPlM3UXtNYUFsv509Jmt7U/mWzKWnfXjeFFuimZDAZVJRsW+vEavQLQV9y8kKt4UTPfs=
