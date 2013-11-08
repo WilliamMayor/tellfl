@@ -2,9 +2,12 @@ import sqlite3
 import time
 import inspect
 
+from pkg_resources import resource_string
+
 from nose.tools import assert_equal
 
-from tellfl import __get_spends, get_weekly_spends
+from tellfl import tellfl
+from tellfl.reports import __get_spends, get_weekly_spends
 
 conn = None
 
@@ -18,10 +21,8 @@ def setup():
     global conn
     conn = sqlite3.connect(':memory:')
     c = conn.cursor()
-    for path in ['schema.sql']:
-        with open(path, 'r') as fd:
-            sql = fd.read()
-            c.executescript(sql)
+    sql = resource_string(tellfl.__name__, 'assets/schema.sql')
+    c.executescript(sql)
     c.close()
 
 
@@ -29,10 +30,10 @@ def teardown():
     conn.close()
 
 
-def add_user(email):
+def add_user(username):
     c = conn.cursor()
-    c.execute('INSERT INTO users(email) VALUES(?)', (email, ))
-    return (c.lastrowid, email)
+    c.execute('INSERT INTO users(username) VALUES(?)', (username, ))
+    return (c.lastrowid, username)
 
 
 def add_journey(user, station_from, station_to, time_in, time_out, cost):
