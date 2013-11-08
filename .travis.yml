@@ -4,9 +4,10 @@ python:
 branches:
   only:
   - master
-install: bash .travis/install.sh
-script: bash .travis/script.sh
-after_script: bash .travis/after_script.sh
+install: 
+- pip install -r requirements.txt --use-mirrors
+- pip install .
+script: nosetests
 env:
   global:
   - secure: dDDjukyQ2oQxTbW1rCQsdMcM6Lmw4InGmJTkvVgWIZ4h/go4ci88FYTclh0jv3ECJ8PhJHUvRdzQuEwxil3tUeTtwEoedJrsdP77gVfMPlM3UXtNYUFsv509Jmt7U/mWzKWnfXjeFFuimZDAZVJRsW+vEavQLQV9y8kKt4UTPfs=
