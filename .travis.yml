@@ -4,7 +4,6 @@ python:
 branches:
   only:
   - master
-  - dropbox
 install: bash .travis/install.sh
 script: bash .travis/script.sh
 env:
