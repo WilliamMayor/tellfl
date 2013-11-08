@@ -48,62 +48,54 @@ def create_overall(cursor, uid, reports):
          'WHERE user=?'),
         (uid, )
     )
-    stats = cursor.fetchone()
-    return dict(
-        total_spend=stats[0] or 0,
-        mean_spend=stats[1] or 0,
-        spend_count=stats[2] or 0
-    )
-
-
-def create_daily(cursor, uid, reports):
+    pstats = cursor.fetchone()
     cursor.execute(
         ('SELECT MIN(time_in), MAX(time_out) '
          'FROM journeys '
          'WHERE user=?'),
         (uid, )
     )
-    stats = cursor.fetchone()
-    t_in = from_timestamp(stats[0] or 0).date()
-    t_out = from_timestamp(stats[1] or 0).date() + datetime.timedelta(days=1)
+    jstats = cursor.fetchone()
+    return dict(
+        total_spend=pstats[0] or 0,
+        mean_spend=pstats[1] or 0,
+        spend_count=pstats[2] or 0,
+        min_time=from_timestamp(jstats[0] or 0),
+        max_time=from_timestamp(jstats[1] or 0)
+    )
+
+
+def create_daily(cursor, uid, reports):
+    t_in = reports['min_time'].date()
+    t_out = reports['max_time'].date() + datetime.timedelta(days=1)
     delta = t_out - t_in
     return dict(
-        days_count=delta.days
+        days_count=delta.days,
+        mean_daily_spend=reports['total_spend'] / delta.days
     )
+
+
+def create_weekly(cursor, uid, reports):
+    return dict()
 
 
 def create(cursor, uid):
     reports = {}
     reports.update(create_overall(cursor, uid, reports))
     reports.update(create_daily(cursor, uid, reports))
+    reports.update(create_weekly(cursor, uid, reports))
     return reports
 
-    cursor.execute(PAYMENT_STATS, (uid, ))
-    payment_stats = cursor.fetchone()
-    p_total = payment_stats[0] or 0
-    p_mean = payment_stats[1] or 0
-    cursor.execute(JOURNEY_STATS, (uid, ))
-    journey_stats = cursor.fetchone()
-    j_min = journey_stats[0] or 0
-    j_max = journey_stats[1] or 1
-    j_count = journey_stats[2] or 1
-    j_mean = journey_stats[3] or 0
-    j_sum = journey_stats[4] or 1
-    j_total = j_max - j_min
-    reports['S_spend'] = (p_total / 100.00, )
-    reports['E_spend'] = (p_mean / 100.00, )
-    reports['S_d'] = (j_total / DAY, )
-    reports['E_d_spend'] = (p_total / (j_total / DAY) / 100.00)
-    reports['S_w'] = (j_total / WEEK)
-    reports['E_w_spend'] = (p_total / (j_total / WEEK) / 100.00)
-    reports['S_m'] = (j_total / MONTH)
-    reports['E_m_spend'] = (p_total / (j_total / MONTH) / 100.00)
-    reports['S_y'] = (j_total / YEAR)
-    reports['E_y_spend'] = (p_total / (j_total / YEAR) / 100.00)
-    reports['S_j'] = (j_count)
-    reports['E_j_spend'] = (p_total / (j_count * 100.00))
-    reports['E_j_time'] = (j_mean / MINUTE)
-    reports['E_mi_spend'] = (p_total / (j_sum / MINUTE * 100.00))
+    #reports['S_w'] = (j_total / WEEK)
+    #reports['E_w_spend'] = (p_total / (j_total / WEEK) / 100.00)
+    #reports['S_m'] = (j_total / MONTH)
+    #reports['E_m_spend'] = (p_total / (j_total / MONTH) / 100.00)
+    #reports['S_y'] = (j_total / YEAR)
+    #reports['E_y_spend'] = (p_total / (j_total / YEAR) / 100.00)
+    #reports['S_j'] = (j_count)
+    #reports['E_j_spend'] = (p_total / (j_count * 100.00))
+    #reports['E_j_time'] = (j_mean / MINUTE)
+    #reports['E_mi_spend'] = (p_total / (j_sum / MINUTE * 100.00))
 
 
 def asText(r):
