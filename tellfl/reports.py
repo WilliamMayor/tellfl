@@ -79,8 +79,10 @@ def create_weekly(cursor, uid, reports):
     t_in = reports['min_time'].date()
     t_out = reports['max_time'].date() + datetime.timedelta(days=1)
     delta = t_out - t_in
+    weeks = int(delta.days / 7.0 + 0.5)
     return dict(
-        weeks_count=int(delta.days / 7.0 + 0.5)
+        weeks_count=weeks,
+        mean_weekly_spend=reports['total_spend'] / weeks
     )
 
 
@@ -91,8 +93,6 @@ def create(cursor, uid):
     reports.update(create_weekly(cursor, uid, reports))
     return reports
 
-    #reports['S_w'] = (j_total / WEEK)
-    #reports['E_w_spend'] = (p_total / (j_total / WEEK) / 100.00)
     #reports['S_m'] = (j_total / MONTH)
     #reports['E_m_spend'] = (p_total / (j_total / MONTH) / 100.00)
     #reports['S_y'] = (j_total / YEAR)
