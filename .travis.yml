@@ -8,10 +8,3 @@ install:
 - pip install -r requirements.txt --use-mirrors
 - pip install .
 script: nosetests
-env:
-  global:
-  - secure: dDDjukyQ2oQxTbW1rCQsdMcM6Lmw4InGmJTkvVgWIZ4h/go4ci88FYTclh0jv3ECJ8PhJHUvRdzQuEwxil3tUeTtwEoedJrsdP77gVfMPlM3UXtNYUFsv509Jmt7U/mWzKWnfXjeFFuimZDAZVJRsW+vEavQLQV9y8kKt4UTPfs=
-  - secure: Avh7cR7erHK/s4Gtbxm08Z344aUhZWv5FC9RmbU3vV1c4Zh8Xsi8mWa76ctwdNacxFjcqRxPAGZ6MSPXeDiXucbEJdzRLQDAvTkFhU+tT+opOxYWtwI1fqpNpLpwNF+4Eh2ejpmCo+kYDe0kGD8OGLBog2pzAhTYSsdFJmcOLms=
-  - secure: BxTsDW2cMEafAbIKVyMb6EIUDLMqQy79/adXUcRUbsSK29c8NkzyGmfC090j7DE0P/lpld64rM+3wHVhGUbugbAghwhd1vk07hyGpzb+EB9gw5VOIN5s740Izg9V77cN9vSrTklOHdre1fU5tHrpk4Xwz1KUDkqpneglHUz2Ox4=
-  - secure: U5gJRtFtsYO9nYfkSNbj52PbHBOChTvjL9i+lPzUE6Z8L3v9vPWXtVKfBxgLwJ8R0VrFSoTirovutj2asx+hOplhDMZ9SlpJ+5ZOlFrN4MSRf4tEeYPvYZfm9KvrIjugyuF9q20aPL64MHxxRpJmv5AjfQogbyiDeI/5+K3roHo=
-  - secure: ACVrVP1xIuf4tvNSpVYVBVOkwELf1PTrGLDHZzBHQVFJpxjMcVIi73nOBU0NwJdDwqO+sVmJ5pNvtXVRl4WCs7R0H6NRqoq5jyKx2z4MNj+yN9KhZdPaDk68Qm2+tW/DJWWayxsGF4bLDwRO+31GdAnnEAaC4mIWWcn7AI5/2vI=
