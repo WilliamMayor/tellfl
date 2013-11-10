@@ -9,8 +9,13 @@ import reports
 
 DB_NAME = 'tellfl.db'
 
-INSERT_PAYMENT = 'INSERT INTO payments(user, amount, time) VALUES(?, ?, ?)'
-INSERT_JOURNEY = 'INSERT INTO journeys(user, station_from, station_to, time_in, time_out, cost) VALUES(?, ?, ?, ?, ?, ?)' # NOQA
+INSERT_PAYMENT = ('INSERT INTO '
+                  '    payments(user, amount, time) '
+                  'VALUES(?, ?, ?)')
+INSERT_JOURNEY = ('INSERT INTO '
+                  '    journeys(user, station_from, station_to, '
+                  '    time_in, time_out, cost) '
+                  'VALUES(?, ?, ?, ?, ?, ?)')
 
 
 def find_user(cursor, username):
