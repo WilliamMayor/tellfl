@@ -41,7 +41,7 @@ def from_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp, tz)
 
 
-def create_overall(cursor, uid, reports):
+def create_raw(cursor, uid, reports):
     cursor.execute(
         ('SELECT SUM(amount), AVG(amount), COUNT(amount) '
          'FROM payments '
@@ -50,7 +50,10 @@ def create_overall(cursor, uid, reports):
     )
     pstats = cursor.fetchone()
     cursor.execute(
-        ('SELECT MIN(time_in), MAX(time_out) '
+        ('SELECT '
+         '    MIN(time_in), MAX(time_out), '
+         '    COUNT(*), AVG(time_out - time_in) '
+         '    SUM(time_out - time_in) '
          'FROM journeys '
          'WHERE user=?'),
         (uid, )
@@ -61,7 +64,10 @@ def create_overall(cursor, uid, reports):
         mean_spend=pstats[1] or 0,
         spend_count=pstats[2] or 0,
         min_time=from_timestamp(jstats[0] or 0),
-        max_time=from_timestamp(jstats[1] or 0)
+        max_time=from_timestamp(jstats[1] or 0),
+        journey_count=jstats[2] or 1,
+        mean_journey_length=jstats[3] or 0,
+        total_journey_time=jstats[4] or 1
     )
 
 
@@ -69,9 +75,10 @@ def create_daily(cursor, uid, reports):
     t_in = reports['min_time'].date()
     t_out = reports['max_time'].date() + datetime.timedelta(days=1)
     delta = t_out - t_in
+    mds = float(reports['total_spend']) / delta.days
     return dict(
         days_count=delta.days,
-        mean_daily_spend=reports['total_spend'] / delta.days
+        mean_daily_spend=mds
     )
 
 
@@ -79,28 +86,55 @@ def create_weekly(cursor, uid, reports):
     t_in = reports['min_time'].date()
     t_out = reports['max_time'].date() + datetime.timedelta(days=1)
     delta = t_out - t_in
-    weeks = int(delta.days / 7.0 + 0.5)
+    weeks = delta.days / 7.0
     return dict(
         weeks_count=weeks,
         mean_weekly_spend=reports['total_spend'] / weeks
     )
 
 
+def create_monthly(cursor, uid, reports):
+    t_in = reports['min_time'].date()
+    t_out = reports['max_time'].date() + datetime.timedelta(days=1)
+    delta = t_out - t_in
+    months = delta.days / 365.2425 * 12
+    mms = reports['total_spend'] / months
+    return dict(
+        months_count=months,
+        mean_monthly_spend=mms
+    )
+
+
+def create_annually(cursor, uid, reports):
+    t_in = reports['min_time'].date()
+    t_out = reports['max_time'].date() + datetime.timedelta(days=1)
+    delta = t_out - t_in
+    years = delta.days / 365.2425
+    mas = reports['total_spend'] / years
+    return dict(
+        years_count=years,
+        mean_annual_spend=mas
+    )
+
+
+def create_journey(cursor, uid, reports):
+    mjc = float(reports['total_spend']) / reports['journey_count']
+    cps = float(reports['total_spend']) / reports['total_journey_time']
+    return dict(
+        mean_journey_cost=mjc,
+        cost_per_second=cps
+    )
+
+
 def create(cursor, uid):
     reports = {}
-    reports.update(create_overall(cursor, uid, reports))
+    reports.update(create_raw(cursor, uid, reports))
     reports.update(create_daily(cursor, uid, reports))
     reports.update(create_weekly(cursor, uid, reports))
+    reports.update(create_monthly(cursor, uid, reports))
+    reports.update(create_annually(cursor, uid, reports))
+    reports.update(create_journey(cursor, uid, reports))
     return reports
-
-    #reports['S_m'] = (j_total / MONTH)
-    #reports['E_m_spend'] = (p_total / (j_total / MONTH) / 100.00)
-    #reports['S_y'] = (j_total / YEAR)
-    #reports['E_y_spend'] = (p_total / (j_total / YEAR) / 100.00)
-    #reports['S_j'] = (j_count)
-    #reports['E_j_spend'] = (p_total / (j_count * 100.00))
-    #reports['E_j_time'] = (j_mean / MINUTE)
-    #reports['E_mi_spend'] = (p_total / (j_sum / MINUTE * 100.00))
 
 
 def asText(r):
