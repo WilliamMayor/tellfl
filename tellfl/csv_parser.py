@@ -81,13 +81,17 @@ def parse_row(row):
     }
 
 
-def parse_csv(path):
-    with open(path, 'rb') as fd:
-        for line in csv.reader(fd, skipinitialspace=True):
-            try:
-                # date, start, end, action, charge, credit, balance, note
-                raw = map(string.strip, line)
-                values = parse_values(raw)
-                yield parse_row(values)
-            except:
-                pass
+def parse(pathorstring):
+    try:
+        with open(path, 'rb') as fd:
+            csv = fd.read()
+    except:
+            csv = pathorstring
+    for line in csv.reader(csv.splitlines(), skipinitialspace=True):
+        try:
+            # date, start, end, action, charge, credit, balance, note
+            raw = map(string.strip, line)
+            values = parse_values(raw)
+            yield parse_row(values)
+        except:
+            pass    

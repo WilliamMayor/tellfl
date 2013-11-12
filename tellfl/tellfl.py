@@ -4,7 +4,7 @@ import os
 
 from pkg_resources import resource_string
 
-from csv_parser import parse_csv
+import csv_parser
 import reports
 
 DB_NAME = 'tellfl.db'
@@ -28,7 +28,7 @@ def find_user(cursor, username):
 
 
 def add_to_db(cursor, uid, csv_path):
-    for record in parse_csv(csv_path):
+    for record in csv_parser.parse(csv_path):
         if record['type'] == 'payment':
             cursor.execute(
                 INSERT_PAYMENT,
