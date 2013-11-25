@@ -25,30 +25,24 @@ def to_timestamp(date, _time):
 
 
 def parse_values(row):
-    time_start = to_timestamp(row[0], row[1])
-    time_end = None
-    if row[2] != '':
-        time_end = to_timestamp(row[0], row[2])
-    action = row[3]
-    charge = None
-    if row[4] != '':
-        charge = int(row[4].replace('.', ''))
-    credit = None
-    if row[5] != '':
-        credit = int(row[5].replace('.', ''))
-    balance = int(row[6].replace('.', ''))
-    note = None
-    if row[7] != '':
-        note = row[7]
-    return {
-        'time_in': time_start,
-        'time_out': time_end,
-        'action': action,
-        'charge': charge,
-        'credit': credit,
-        'balance': balance,
-        'note': note
+    d = {
+        'time_start': to_timestamp(row[0], row[1]),
+        'time_end': None,
+        'action': row[3],
+        'charge': None,
+        'credit': None,
+        'balance': int(row[6].replace('.', '')),
+        'note': None
     }
+    if row[2] != '':
+        d['time_end'] = to_timestamp(row[0], row[2])
+    if row[4] != '':
+        d['charge'] = int(row[4].replace('.', ''))
+    if row[5] != '':
+        d['credit'] = int(row[5].replace('.', ''))
+    if row[7] != '':
+        d['note'] = row[7]
+    return d
 
 
 def parse_action(action):
@@ -68,30 +62,30 @@ def parse_row(row):
         return {
             'type': 'payment',
             'amount': row['credit'],
-            'time': row['time_in']
+            'time': row['time_start']
         }
     station_from, station_to = parse_action(row['action'])
     return {
         'type': 'journey',
         'station_from': station_from,
         'station_to': station_to,
-        'time_in': row['time_in'],
-        'time_out': row['time_out'],
+        'time_start': row['time_start'],
+        'time_end': row['time_end'],
         'cost': row['charge']
     }
 
 
 def parse(pathorstring):
     try:
-        with open(path, 'rb') as fd:
-            csv = fd.read()
+        with open(pathorstring, 'rb') as fd:
+            values = fd.read()
     except:
-            csv = pathorstring
-    for line in csv.reader(csv.splitlines(), skipinitialspace=True):
+            values = pathorstring
+    for line in csv.reader(values.splitlines(), skipinitialspace=True):
         try:
             # date, start, end, action, charge, credit, balance, note
             raw = map(string.strip, line)
             values = parse_values(raw)
             yield parse_row(values)
         except:
-            pass    
+            pass
