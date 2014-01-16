@@ -1,93 +1,81 @@
-# -*- coding: utf-8 -*-
-import sqlite3
-import os
+import datetime
+import csv
+import StringIO
 
-from pkg_resources import resource_string
-
-import csv_parser
-import reports
-
-DB_NAME = 'tellfl.db'
-
-INSERT_PAYMENT = ('INSERT INTO '
-                  '    payments(user, amount, time) '
-                  'VALUES(?, ?, ?)')
-INSERT_JOURNEY = ('INSERT INTO '
-                  '    journeys(user, station_from, station_to, '
-                  '    time_in, time_out, cost) '
-                  'VALUES(?, ?, ?, ?, ?, ?)')
+import pytz
 
 
-def find_user(cursor, username):
-    q = 'SELECT id FROM users WHERE username=?'
-    cursor.execute(q, (username, ))
+def parse_time(date, time_):
     try:
-        return int(cursor.fetchone()[0])
+        d_fmt = '%d-%b-%Y %X'
+        tz = pytz.timezone('Europe/London')
+        dt = datetime.datetime.strptime(
+            '%s %s:00' % (date, time_),
+            d_fmt
+        )
+        dt = datetime.datetime(
+            dt.year,
+            dt.month,
+            dt.day,
+            dt.hour,
+            dt.minute,
+            tzinfo=tz
+        )
+        t = int(dt.strftime('%s'))
     except:
-        raise Exception('No user with that username')
+        t = None
+    return t
 
 
-def add_to_db(cursor, uid, csv_path):
-    for record in csv_parser.parse(csv_path):
-        if record['type'] == 'payment':
-            cursor.execute(
-                INSERT_PAYMENT,
-                (uid, record['amount'], record['time'])
-            )
-        elif record['type'] == 'journey':
-            cursor.execute(
-                INSERT_JOURNEY,
-                (uid, record['station_from'], record['station_to'],
-                 record['time_in'], record['time_out'], record['cost'])
-            )
+def parse_journey(journey):
+    journey = journey.strip('"')
+    a, b = None, None
+    if journey.startswith('Bus journey'):
+        a = journey.replace('Bus journey, route ', '')
+    elif ' to ' in journey:
+        a, b = journey.split(' to ')
+    elif journey.startswith('Entered and exited '):
+        a = journey.replace('Entered and exited ', '')
+        b = a
+    return a, b
 
 
-class TellfLException(Exception):
-    pass
+def parse_cost(cost):
+    try:
+        c = int(cost.replace('.', ''))
+    except:
+        c = None
+    return c
 
 
-class DB:
-
-    def __init__(self, location):
-        self.location = location
-
-    def __enter__(self):
-        self.conn = sqlite3.connect(os.path.join(self.location, DB_NAME))
-        return self.conn.cursor()
-
-    def __exit__(self, type, value, traceback):
-        if traceback is None:
-            self.conn.commit()
-        self.conn.close()
+def parse_row(date, time_in, time_out, action, charge, credit, balance, note):
+    time_in = parse_time(date, time_in)
+    time_out = parse_time(date, time_out)
+    station_in, station_out = parse_journey(action)
+    charge = parse_cost(charge)
+    credit = parse_cost(credit)
+    if time_in is None or not any([charge, credit]):
+        raise Exception('Could not prase row')
+    return (time_in, time_out,
+            station_in, station_out,
+            charge, credit)
 
 
-def report(username, location, as_html):
-    with DB(location) as cursor:
-        uid = find_user(cursor, username)
-        r = reports.create(cursor, uid)
-        if as_html:
-            print reports.asHtml(r)
-        else:
-            print reports.asText(r)
-
-
-def add(username, csv_path, location):
-    with DB(location) as cursor:
-        uid = find_user(cursor, username)
-        add_to_db(cursor, uid, csv_path)
-
-
-def register(username, location):
-    with DB(location) as cursor:
+def parse_csv(data):
+    rows = []
+    for row in csv.reader(StringIO.StringIO(data)):
         try:
-            q = 'INSERT INTO users(username) VALUES(?)'
-            cursor.execute(q, (username, ))
-            return cursor.lastrowid
+            rows.append(parse_row(*row))
         except:
-            raise TellfLException('A user with that username already exists')
+            pass
+    return rows
 
 
-def install(location):
-    with DB(location) as cursor:
-        sql = resource_string(__name__, 'assets/schema.sql')
-        cursor.executescript(sql)
+if __name__ == '__main__':
+    import os
+    import sys
+    for root, dirs, files in os.walk(sys.argv[1]):
+        for f in [f for f in files if f.endswith('.csv')]:
+            with open(os.path.join(root, f), 'r') as fd:
+                for r in parse_csv(fd.read()):
+                    print(r)
