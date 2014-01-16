@@ -36,20 +36,20 @@ def add_user(username):
     return (c.lastrowid, username)
 
 
-def add_journey(user, station_from, station_to, time_in, time_out, cost):
+def add_journey(user, station_from, station_to, time_start, time_end, cost):
     c = conn.cursor()
     c.execute(('INSERT INTO '
                'journeys(user, station_from, station_to, '
-               'time_in, time_out, cost) '
+               'time_start, time_end, cost) '
                'VALUES(?, ?, ?, ?, ?, ?)'),
-             (user, station_from, station_to, time_in, time_out, cost))
+             (user, station_from, station_to, time_start, time_end, cost))
     return c.lastrowid
 
 
 def test_get_spend_nothing():
     c = conn.cursor()
     (uid, email) = add_user('%s@tellfl.co.uk' % inspect.stack()[0][3])
-    spends = __get_spends(c, uid, 0, 52*WEEK)
+    spends = __get_spends(c, uid, 0, 52 * WEEK)
     assert_equal([], spends)
 
 
@@ -94,7 +94,7 @@ def test_get_weekly_spend_ignore_past_default():
     c = conn.cursor()
     now = int(time.time())
     (uid, email) = add_user('%s@tellfl.co.uk' % inspect.stack()[0][3])
-    add_journey(uid, 'A', 'B', now - 2*WEEK, HOUR, 300)
+    add_journey(uid, 'A', 'B', now - 2 * WEEK, HOUR, 300)
     add_journey(uid, 'A', 'B',
                 now - DAY, now - DAY + HOUR, 300)
     add_journey(uid, 'A', 'B',

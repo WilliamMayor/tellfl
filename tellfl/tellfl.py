@@ -82,12 +82,12 @@ def register(username, location):
         try:
             q = 'INSERT INTO users(username) VALUES(?)'
             cursor.execute(q, (username, ))
+            return cursor.lastrowid
         except:
             raise TellfLException('A user with that username already exists')
 
 
 def install(location):
-    os.makedirs(location)
     with DB(location) as cursor:
         sql = resource_string(__name__, 'assets/schema.sql')
         cursor.executescript(sql)

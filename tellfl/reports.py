@@ -12,28 +12,74 @@ YEAR = WEEK * 52.0
 MONTH = YEAR / 12.0
 
 PAYMENT_STATS = 'SELECT SUM(amount), AVG(amount) FROM payments WHERE user=?'
-JOURNEY_STATS = 'SELECT MIN(time_in), MAX(time_out), COUNT(*), AVG(time_out - time_in), SUM(time_out - time_in) FROM journeys WHERE user=?' # NOQA
+JOURNEY_STATS = 'SELECT MIN(time_start), MAX(time_end), COUNT(*), AVG(time_end - time_start), SUM(time_end - time_start) FROM journeys WHERE user=?' # NOQA
 
 
 def __get_spends(cursor, user_id, start, period):
-    q = ('SELECT t.time_in, SUM(s.cost) AS sum '
+    q = ('SELECT t.time_start, SUM(s.cost) AS sum '
          'FROM '
          '  journeys AS t, '
          '  (SELECT * FROM journeys) as s '
          'WHERE '
-         '  t.time_in >= ? AND '
+         '  t.time_start >= ? AND '
          '  t.user == ? AND '
          '  t.user == s.user AND '
-         '  t.time_in < s.time_out AND '
-         '  t.time_in + ? > s.time_out '
-         'GROUP BY t.time_in')
+         '  t.time_start < s.time_end AND '
+         '  t.time_start + ? > s.time_end '
+         'GROUP BY t.time_start')
     return list(cursor.execute(q, (start, user_id, period)))
 
 
 def get_weekly_spends(cursor, user_id, start=None):
     if start is None:
-        start = int(time.time()) - 2*WEEK
+        start = int(time.time()) - 2 * WEEK
     return __get_spends(cursor, user_id, start, WEEK)
+
+
+class Data:
+
+    def __init__(self, cursor, uid):
+        self.cursor = cursor
+        self.uid = uid
+
+    @property
+    def total_credit(self):
+        if self._total_credit is None:
+            self.cursor.execute(
+                ('SELECT SUM(amount) FROM payments WHERE user=?'),
+                (self.uid, )
+            )
+            self._total_credit = self.cursor.fetchone()[0] or 0
+        return self._total_credit
+
+    @property
+    def min_time(self):
+        if self._min_time is None:
+            self.cursor.execute(
+                ('SELECT MIN(time_start) FROM journeys WHERE user=?'),
+                (self.uid, )
+            )
+            self._min_time = self.cursor.fetchone()[0] or 0
+        return self._min_time
+
+    @property
+    def max_time(self):
+        if self._max_time is None:
+            self.cursor.execute(
+                ('SELECT MAX(time_end) FROM journeys WHERE user=?'),
+                (self.uid, )
+            )
+            self._max_time = self.cursor.fetchone()[0] or 0
+        return self._max_time
+
+    @property
+    def days_count(self):
+        if self._days_count is None:
+            t_in = self.min_time.date()
+            t_out = self.max_time.date() + datetime.timedelta(days=1)
+            delta = t_out - t_in
+            self._days_count = delta.days
+        return self._days_count
 
 
 def from_timestamp(timestamp):
@@ -51,9 +97,9 @@ def create_raw(cursor, uid, reports):
     pstats = cursor.fetchone()
     cursor.execute(
         ('SELECT '
-         '    MIN(time_in), MAX(time_out), '
-         '    COUNT(*), AVG(time_out - time_in) '
-         '    SUM(time_out - time_in) '
+         '    MIN(time_start), MAX(time_end), '
+         '    COUNT(*), AVG(time_end - time_start) '
+         '    SUM(time_end - time_start) '
          'FROM journeys '
          'WHERE user=?'),
         (uid, )

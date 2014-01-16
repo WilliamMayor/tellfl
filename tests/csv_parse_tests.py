@@ -1,21 +1,8 @@
-import sqlite3
-
 from pkg_resources import resource_string
 
 from nose.tools import assert_equal
 
-from tellfl import tellfl, csv_parser
-
-conn = None
-
-
-def setup():
-    global conn
-    sql = resource_string(tellfl.__name__, 'assets/schema.sql')
-    conn = sqlite3.connect(':memory:')
-    c = conn.cursor()
-    c.executescript(sql)
-    conn.commit()
+from tellfl import csv_parser
 
 
 def make_journey(t, sf, st, ti, to, c):

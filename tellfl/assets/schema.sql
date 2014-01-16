@@ -10,10 +10,10 @@ CREATE TABLE journeys (
     user INTEGER,
     station_from TEXT,
     station_to TEXT,
-    time_in INTEGER,
-    time_out INTEGER,
+    time_start INTEGER,
+    time_end INTEGER,
     cost INTEGER,
-    UNIQUE(user, time_in) ON CONFLICT IGNORE,
+    UNIQUE(user, time_start) ON CONFLICT IGNORE,
     FOREIGN KEY (user) REFERENCES users(id)
 );
 CREATE TABLE payments (
