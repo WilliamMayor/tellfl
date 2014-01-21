@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+</head>
+<body>
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+        <th>Journey/Action</th>
+        <th>Charge</th>
+        <th>Credit</th>
+        <th>Balance</th>
+        <th>Note</th>
+    </tr>
+{% for h in history %}
+    <tr>
+        <td>{{ h.date }}</td>
+        <td>{{ h.start_time }}</td>
+        <td>{{ h.end_time }}</td>
+        <td>{{ h.journey_action }}</td>
+        <td>{{ h.charge }}</td>
+        <td>{{ h.credit }}</td>
+        <td>{{ h.balance }}</td>
+        <td>{{ h.note }}</td>
+    </tr>
+{% endfor %}
+</table>
+</body>
+</html>
