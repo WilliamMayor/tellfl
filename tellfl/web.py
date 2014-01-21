@@ -21,4 +21,5 @@ def user_history(uid):
 
 @app.route('/history/', methods=['POST'])
 def history():
-    return str(request.form)
+    print str(request.form)
+    return 'OK'
