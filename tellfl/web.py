@@ -24,6 +24,8 @@ def mailgun():
     u = User.query.filter_by(email=from_).first()
     print 'User:', u
     if u is not None:
+        for k, v in request.form.iteritems():
+            print '%s: %s' % (k, v)
         for f in request.files:
             print '  File:', f.name
             for h in parse.csv(f):
