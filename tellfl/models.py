@@ -11,7 +11,7 @@ class User(db.Model):
         self.email = email
 
     def __repr__(self):
-        return '<User %r>' % self.email
+        return '<User:%d %r>' % (self.id, self.email)
 
 
 class History(db.Model):

@@ -20,9 +20,12 @@ def index():
 @app.route('/mailgun/', methods=['POST'])
 def mailgun():
     from_ = request.form['from'].strip('<>')
+    print 'From:', from_
     u = User.query.filter_by(email=from_).first()
+    print 'User:', u
     if u is not None:
         for f in request.files:
+            print '  File:', f.name
             for h in parse.csv(f):
                 h.user = u
                 db.session.add(h)
