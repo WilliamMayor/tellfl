@@ -1,7 +1,10 @@
 # flake8: NOQA
+import StringIO
+
 from nose.tools import assert_equals, assert_is_none
 
-import tellfl
+import tellfl.parse
+from tellfl.models import History
 
 CSV = """
 Date,Start Time,End Time,Journey/Action,Charge,Credit,Balance,Note
@@ -23,45 +26,45 @@ Date,Start Time,End Time,Journey/Action,Charge,Credit,Balance,Note
 
 
 def test_parse_time():
-    assert_equals(1388577600, tellfl.parse_time('01-Jan-2014', '12:00'))
+    assert_equals(1388577600, tellfl.parse._time('01-Jan-2014', '12:00'))
 
 
 def test_parse_journey_x_to_y():
     assert_equals(
         ('Bank', 'Holborn'),
-        tellfl.parse_journey('"Bank to Holborn"'))
+        tellfl.parse._journey('"Bank to Holborn"'))
 
 
 def test_parse_journey_x_to_x():
     assert_equals(
         ('Bank', 'Bank'),
-        tellfl.parse_journey('"Entered and exited Bank"'))
+        tellfl.parse._journey('"Entered and exited Bank"'))
 
 
 def test_parse_journey_bus():
     assert_equals(
         ('H1', None),
-        tellfl.parse_journey('"Bus journey, route H1"'))
+        tellfl.parse._journey('"Bus journey, route H1"'))
 
 
 def test_parse_cost():
-    assert_equals(1234, tellfl.parse_cost("12.34"))
+    assert_equals(1234, tellfl.parse._cost("12.34"))
 
 
 def test_parse_no_cost():
-    assert_is_none(tellfl.parse_cost(''))
+    assert_is_none(tellfl.parse._cost(''))
 
 
 def test_parse_row_journey():
     assert_equals(
         (1388577600, 1388577660, 'Bank', 'Holborn', 100, None),
-        tellfl.parse_row('01-Jan-2014', '12:00','12:01','Bank to Holborn','1.00','','10.00',''))
+        tellfl.parse._row('01-Jan-2014', '12:00','12:01','Bank to Holborn','1.00','','10.00',''))
 
 
 def test_parse_row_topup():
     assert_equals(
         (1388577600, None, None, None, None, 1000),
-        tellfl.parse_row('01-Jan-2014', '12:00','','Auto top-up, Bank','','10.00','10.00',''))
+        tellfl.parse._row('01-Jan-2014', '12:00','','Auto top-up, Bank','','10.00','10.00',''))
 
 
 def test_parse_csv():
@@ -80,4 +83,22 @@ def test_parse_csv():
          (1386006360, 1386008880, 'Euston Square', 'Ruislip', 500, None),
          (1385967480, 1385970420, 'Ruislip', 'Euston Square', 500, None),
          (1385967480, None, None, None, None, 2000)],
-        tellfl.parse_csv(CSV))
+        tellfl.parse.csv(StringIO.StringIO(CSV)))
+
+def test_parse_history():
+    assert_equals(
+        [History(None, '06-Dec-2013', '17:30', '18:12', 'Euston Square to Ruislip',                                 '5.00', None,    '17.85', None),
+         History(None, '06-Dec-2013', '07:01', '07:56', 'Ruislip to Euston Square',                                 '5.00', None,    '22.85', None),
+         History(None, '06-Dec-2013', '07:01', None   , 'Auto top-up, Ruislip',                                     None,   '20.00', '27.85', None),
+         History(None, '05-Dec-2013', '17:06', '18:11', 'Waterloo [London Underground / National Rail] to Ruislip', '5.00', None,    '7.85',  None),
+         History(None, '05-Dec-2013', '13:14', None   , 'Bus journey, route 168',                                   '1.40', None,    '12.85', None),
+         History(None, '05-Dec-2013', '09:15', '10:14', 'Ruislip to Euston Square',                                 '5.00', None,    '14.25', None),
+         History(None, '04-Dec-2013', '15:59', '16:53', 'Waterloo [London Underground / National Rail] to Ruislip', '3.00', None,    '19.25', None),
+         History(None, '04-Dec-2013', '06:57', '07:48', 'Ruislip to Waterloo [London Underground / National Rail]', '5.00', None,    '22.25', None),
+         History(None, '04-Dec-2013', '06:57', None   , 'Auto top-up, Ruislip',                                     None,   '20.00', '27.25', None),
+         History(None, '03-Dec-2013', '17:06', '17:52', 'Euston Square to Ruislip',                                 '5.00', None,    '7.25',  None),
+         History(None, '03-Dec-2013', '06:57', '07:44', 'Ruislip to Euston Square',                                 '5.00', None,    '12.25', None),
+         History(None, '02-Dec-2013', '17:46', '18:28', 'Euston Square to Ruislip',                                 '5.00', None,    '17.25', None),
+         History(None, '02-Dec-2013', '06:58', '07:47', 'Ruislip to Euston Square',                                 '5.00', None,    '22.25', None),
+         History(None, '02-Dec-2013', '06:58', None   , 'Auto top-up, Ruislip',                                     None,   '20.00', '27.25', None)],
+        tellfl.parse.history(StringIO.StringIO(CSV)))

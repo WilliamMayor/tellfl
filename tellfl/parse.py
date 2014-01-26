@@ -1,11 +1,12 @@
 import datetime
-import csv
-import StringIO
+import csv as csv_
 
 import pytz
 
+from models import History
 
-def parse_time(date, time_):
+
+def _time(date, time_):
     try:
         d_fmt = '%d-%b-%Y %X'
         tz = pytz.timezone('Europe/London')
@@ -27,7 +28,7 @@ def parse_time(date, time_):
     return t
 
 
-def parse_journey(journey):
+def _journey(journey):
     journey = journey.strip('"')
     a, b = None, None
     if journey.startswith('Bus journey'):
@@ -40,7 +41,7 @@ def parse_journey(journey):
     return a, b
 
 
-def parse_cost(cost):
+def _cost(cost):
     try:
         c = int(cost.replace('.', ''))
     except:
@@ -48,12 +49,12 @@ def parse_cost(cost):
     return c
 
 
-def parse_row(date, time_in, time_out, action, charge, credit, balance, note):
-    time_in = parse_time(date, time_in)
-    time_out = parse_time(date, time_out)
-    station_in, station_out = parse_journey(action)
-    charge = parse_cost(charge)
-    credit = parse_cost(credit)
+def _row(date, time_in, time_out, action, charge, credit, balance, note):
+    time_in = _time(date, time_in)
+    time_out = _time(date, time_out)
+    station_in, station_out = _journey(action)
+    charge = _cost(charge)
+    credit = _cost(credit)
     if time_in is None or not any([charge, credit]):
         raise Exception('Could not prase row')
     return (time_in, time_out,
@@ -61,21 +62,20 @@ def parse_row(date, time_in, time_out, action, charge, credit, balance, note):
             charge, credit)
 
 
-def parse_csv(data):
+def _iterate(file_, func):
     rows = []
-    for row in csv.reader(StringIO.StringIO(data)):
-        try:
-            rows.append(parse_row(*row))
-        except:
-            pass
+    reader = csv_.reader(file_)
+    row = reader.next()
+    while 'Date' not in row:
+        row = reader.next()
+    for row in reader:
+        rows.append(func(row))
     return rows
 
 
-if __name__ == '__main__':
-    import os
-    import sys
-    for root, dirs, files in os.walk(sys.argv[1]):
-        for f in [f for f in files if f.endswith('.csv')]:
-            with open(os.path.join(root, f), 'r') as fd:
-                for r in parse_csv(fd.read()):
-                    print(r)
+def csv(file_):
+    return _iterate(file_, lambda r: _row(*r))
+
+
+def history(file_):
+    return _iterate(file_, lambda r: History(None, *r))

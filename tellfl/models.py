@@ -1,4 +1,5 @@
 from flask.ext.sqlalchemy import SQLAlchemy
+
 db = SQLAlchemy()
 
 
@@ -25,9 +26,12 @@ class History(db.Model):
     note = db.Column(db.String(500))
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', backref=db.backref('history', lazy='dynamic'))
+    user = db.relationship(
+        'User',
+        backref=db.backref('history', lazy='dynamic'))
 
-    def __init__(self, user, date, start_time, end_time, journey_action, charge, credit, balance, note):
+    def __init__(self, user, date, start_time, end_time,
+                 journey_action, charge, credit, balance, note):
         self.user = user
         self.date = date
         self.start_time = start_time
@@ -41,10 +45,8 @@ class History(db.Model):
     def __repr__(self):
         return '<History %r %r>' % (self.user_id, self.journey_action)
 
-
-if __name__ == '__main__':
-    u = User('mail@williammayor.co.uk')
-    h = History(u, '29-Nov-2013', '06:00', '07:00', 'Ruislip to Euston Square', '5.00', None, '18.75', '')
-    db.session.add(u)
-    db.session.add(h)
-    db.session.commit()
+    def __eq__(self, other):
+        return all([
+            self.date == other.date,
+            self.start_time == other.start_time,
+            self.journey_action == other.journey_action])
