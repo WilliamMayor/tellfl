@@ -3,6 +3,7 @@ import os
 from flask.ext.login import (
     login_user, login_required,
     logout_user, current_user)
+from flask_sslify import SSLify
 from flask import Flask, render_template, request, redirect, url_for
 
 import parse
@@ -10,7 +11,7 @@ from models import db, User
 from login import login_manager, LoginForm
 
 app = Flask(__name__)
-app.debug = True
+#app.debug = True
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL',
     'sqlite:////Users/william/Desktop/dev.db')
@@ -19,6 +20,7 @@ app.config['SECRET_KEY'] = os.environ.get(
     'development key')
 db.init_app(app)
 login_manager.init_app(app)
+sslify = SSLify(app)
 
 
 @app.route('/')
