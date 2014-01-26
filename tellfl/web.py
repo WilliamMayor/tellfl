@@ -1,20 +1,31 @@
 import os
 
-from flask import Flask, render_template, request
+from flask.ext.login import (
+    login_user, login_required,
+    logout_user, current_user)
+from flask import Flask, render_template, request, redirect, url_for
 
 import parse
 from models import db, User
+from login import login_manager, LoginForm
 
 app = Flask(__name__)
+app.debug = True
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL',
     'sqlite:////Users/william/Desktop/dev.db')
+app.config['SECRET_KEY'] = os.environ.get(
+    'SECRET_KEY',
+    'development key')
 db.init_app(app)
+login_manager.init_app(app)
 
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    if current_user.is_authenticated():
+        return redirect(url_for('history'))
+    return redirect(url_for('login'))
 
 
 @app.route('/mailgun/', methods=['POST'])
@@ -31,13 +42,24 @@ def mailgun():
     return 'OK', 200
 
 
-@app.route('/users/')
-def users():
-    return render_template('users.html', users=User.query.all())
+@app.route("/login/", methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        login_user(form.user)
+        return redirect(request.args.get("next") or url_for("index"))
+    return render_template("login.html", form=form)
 
 
-@app.route('/users/<int:uid>/history/')
-def user_history(uid):
+@app.route('/logout/')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
+@app.route('/history/')
+@login_required
+def history():
     return render_template(
         'history.html',
-        history=User.query.get_or_404(uid).history)
+        history=current_user.history)

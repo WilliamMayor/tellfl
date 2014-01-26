@@ -1,14 +1,33 @@
 from flask.ext.sqlalchemy import SQLAlchemy
+from flaskext.bcrypt import Bcrypt
 
 db = SQLAlchemy()
+bcrypt = Bcrypt()
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(254), unique=True, nullable=False)
+    password_hash = db.Column(db.String(60), nullable=False)
 
-    def __init__(self, email):
+    def __init__(self, email, password):
         self.email = email
+        self.password_hash = bcrypt.generate_password_hash(password)
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return self.id is None
+
+    def get_id(self):
+        return unicode(self.id)
+
+    def check_password(self, candidate):
+        return bcrypt.check_password_hash(self.password_hash, candidate)
 
     def __repr__(self):
         return '<User:%d %r>' % (self.id, self.email)
