@@ -26,7 +26,7 @@ def mailgun():
     if u is not None:
         for k, v in request.form.iteritems():
             print '%s: %s' % (k, v)
-        for f in request.files:
+        for f in request.files.values():
             print '  File:', f.name
             for h in parse.csv(f):
                 h.user = u
